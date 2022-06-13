@@ -174,7 +174,6 @@ functions:
           - "./.evergreen/test.sh"
         env:
           PROJECT_DIRECTORY: ${project_directory}
-          NODE_GITHUB_TOKEN: ${node_github_token}
           DISTRO_ID: ${distro_id}
           BUILD_VARIANT: ${build_variant}
 
@@ -205,11 +204,6 @@ functions:
             exit 0
           fi
           export PROJECT_DIRECTORY=${project_directory}
-          export NEXUS_USERNAME=${nexus_username}
-          export NEXUS_PASSWORD=${nexus_password}
-          export SIGNING_PASSWORD=${signing_password}
-          export SIGNING_KEY_ID=${signing_keyId}
-          export RING_FILE_GPG_BASE64=${ring_file_gpg_base64}
           export GIT_REVISION=${revision} 
           cd ./libmongocrypt/bindings/java/mongocrypt && ${test_env|} ./.evergreen/publish.sh
 
@@ -236,32 +230,7 @@ functions:
       params:
         silent: true
         script: |
-          set -o errexit
-          if [ "${is_patch}" = "true" ]; then
-            exit 0
-          fi
-
-          # set AWS credentials
-          rm -rf ~/.aws
-          mkdir -p ~/.aws
-
-          cat <<EOF >> ~/.aws/config
-          [default]
-          region = us-east-1
-          EOF
-
-          cat <<EOF >> ~/.aws/credentials
-          [default]
-          aws_access_key_id = ${repo_aws_key}
-          aws_secret_access_key = ${repo_aws_secret}
-          EOF
-
-          # set notary credentials
-          rm -f ~/.notary_env.sh
-          cat <<EOF > ~/.notary_env.sh
-          export NOTARY_TOKEN=${repo_notary_secret}
-          export NOTARY_KEY_NAME=${repo_notary_name}
-          EOF
+          exit 0
 
   "build csharp and test":
     - command: "shell.exec"
@@ -614,46 +583,7 @@ tasks:
       params:
         working_dir: libmongocrypt
         script: |-
-          [ -f ~/.notary_env.sh ] && . ~/.notary_env.sh
-          set -o xtrace
-          set -o errexit
-          set -o verbose
-
-          # Find cmake.
-          if [ "$OS" == "Windows_NT" ]; then
-            CMAKE=/cygdrive/c/cmake/bin/cmake
-          else
-            chmod u+x ../mongo-c-driver/.evergreen/find-cmake.sh
-            # Amazon Linux 2 (arm64) has a very old system CMake we want to ignore
-            IGNORE_SYSTEM_CMAKE=1 . ../mongo-c-driver/.evergreen/find-cmake.sh
-          fi
-          # Get the current version of libmongocrypt.
-          mongocrypt_version="$($CMAKE -P ./cmake/GetVersion.cmake 2>&1)"
-
-          if [ "${is_patch}" = "true" ]; then
-            echo "patch build, skipping packaging publication"
-            exit 0
-          fi
-
-          if [ "${has_packages|}" != "true" ] ; then
-            echo "'has_packages' is not 'true', skipping package publication"
-            exit 0
-          fi
-
-          # Need requests and poster for notary-client.py
-          python -m virtualenv venv
-          cd venv
-          . bin/activate
-          ./bin/pip install requests
-          ./bin/pip install poster
-          ./bin/pip install pycrypto
-          cd ..
-          pkg_version=$mongocrypt_version
-          CURATOR_RELEASE=${curator_release|"e0b5f66fc89ec0acddcd40ea5f447a8300ded2b9"}
-          curl -L -O http://boxes.10gen.com/build/curator/curator-dist-rhel70-$CURATOR_RELEASE.tar.gz
-          tar -zxvf curator-dist-rhel70-$CURATOR_RELEASE.tar.gz
-          ./curator version
-          ./curator repo --config etc/repo_config.yaml --distro ${packager_distro} --edition org --version $pkg_version --arch ${packager_arch} --packages repo
+          exit 0
 
 - name: windows-upload-check
   depends_on: build-and-test-and-upload
