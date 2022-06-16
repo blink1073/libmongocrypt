@@ -95,7 +95,7 @@ val jnaResources: String = System.getProperty("jna.library.path", jnaLibsPath)
 
 // Download jnaLibs that match the git to jnaResourcesBuildDir
 val revision: String = System.getProperty("gitRevision", if (gitVersion == version) gitVersion else gitHash)
-val downloadUrl: String = "https://mciuploads.s3.amazonaws.com/libmongocrypt/java/$revision/libmongocrypt-java.tar.gz"
+val downloadUrl: String = "https://mciuploads.s3.amazonaws.com/libmongocrypt-feature/java/$revision/libmongocrypt-java.tar.gz"
 
 val jnaMapping: Map<String, String> = mapOf(
     "rhel-62-64-bit" to "linux-x86-64",
