@@ -739,7 +739,7 @@ pre:
         libmongocrypt_s3_suffix: "$REMOTE_SUFFIX"
         libmongocrypt_s3_suffix_copy: "$REMOTE_SUFFIX_COPY"
         project_directory: "$PROJECT_DIRECTORY"
-        tag_upload_location: $TAG_UPLOAD_LOCATION"
+        tag_upload_location: "$TAG_UPLOAD_LOCATION"
         EOT
   - command: expansions.update
     params:
