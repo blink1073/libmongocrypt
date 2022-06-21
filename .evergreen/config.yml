@@ -554,6 +554,17 @@ tasks:
         target: libmongocrypt-all.tar.gz
         source_dir: all
         include: [./**]
+    - command: shell.exec
+      params:
+        working_dir: libmongocrypt
+        script: |-
+          set -o xtrace
+          set -o errexit
+          if [ -n "${tag_upload_location}" ]; then
+            # the 'pre' step detected a release tag on HEAD, so we prepare a
+            # local file for upload to a location based on the tag
+            tar -zcv -C all -f libmongocrypt-all-${tag_upload_location}.tar.gz *
+          fi
     - command: s3.put
       params:
         aws_key: '${aws_key}'
@@ -571,6 +582,17 @@ tasks:
         bucket: mciuploads
         permissions: public-read
         local_file: 'libmongocrypt-all.tar.gz'
+        content_type: '${content_type|application/x-gzip}'
+    - command: s3.put
+      params:
+        aws_key: '${aws_key}'
+        aws_secret: '${aws_secret}'
+        remote_file: 'libmongocrypt-feature/all/${tag_upload_location}/libmongocrypt-all.tar.gz'
+        bucket: mciuploads
+        permissions: public-read
+        optional: true
+        display_name: 'libmongocrypt-all-${tag_upload_location}.tar.gz'
+        local_file: 'libmongocrypt-all-${tag_upload_location}.tar.gz'
         content_type: '${content_type|application/x-gzip}'
 
 - name: publish-packages
@@ -690,25 +712,34 @@ pre:
           # patch build.
           REMOTE_SUFFIX="${revision}/${version_id}"
           REMOTE_SUFFIX_COPY="latest/${version_id}"
-        elif [ "${branch_name}" = "master" ]; then
-          # waterfall build.
-          REMOTE_SUFFIX="${revision}"
-          REMOTE_SUFFIX_COPY="latest"
         else
-          # waterfall build, not on master branch.
-          REMOTE_SUFFIX="${revision}"
-          REMOTE_SUFFIX_COPY="latest-${branch_name}"
+          if [ "${branch_name}" = "master" ]; then
+            # waterfall build.
+            REMOTE_SUFFIX="${revision}"
+            REMOTE_SUFFIX_COPY="latest"
+          else
+            # waterfall build, not on master branch.
+            REMOTE_SUFFIX="${revision}"
+            REMOTE_SUFFIX_COPY="latest-${branch_name}"
+          fi
+          # determine if we have a release tag present on HEAD
+          head_tag=$(git tag --points-at HEAD 'MONGOCRYPT-315/[0-9].*' | tail -1 | sed 's/MONGOCRYPT-315\///')
+          if [ -n "$head_tag" ]; then
+            TAG_UPLOAD_LOCATION="$head_tag"
+          fi
         fi
 
         PROJECT_DIRECTORY="$(pwd)"
         echo "libmongocrypt_s3_suffix: $REMOTE_SUFFIX"
         echo "libmongocrypt_s3_suffix_copy: $REMOTE_SUFFIX_COPY"
         echo "project_directory: $PROJECT_DIRECTORY"
+        echo "tag_upload_location: $TAG_UPLOAD_LOCATION"
 
         cat <<EOT > expansion.yml
         libmongocrypt_s3_suffix: "$REMOTE_SUFFIX"
         libmongocrypt_s3_suffix_copy: "$REMOTE_SUFFIX_COPY"
         project_directory: "$PROJECT_DIRECTORY"
+        tag_upload_location: $TAG_UPLOAD_LOCATION"
         EOT
   - command: expansions.update
     params:
