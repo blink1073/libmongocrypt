@@ -556,7 +556,6 @@ tasks:
         include: [./**]
     - command: shell.exec
       params:
-        working_dir: libmongocrypt
         script: |-
           set -o xtrace
           set -o errexit
