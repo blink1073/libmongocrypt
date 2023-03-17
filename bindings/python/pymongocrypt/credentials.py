@@ -33,7 +33,7 @@ _azure_creds_cache = None
 def _get_gcp_credentials():
     """Get on-demand GCP credentials"""
     metadata_host = os.getenv("GCE_METADATA_HOST") or "metadata.google.internal"
-    url = "http://%s/computeMetadata/v1/instance/service-accounts/default/token" % metadata_host
+    url = "http://%s/computeMetadata/v1/instance/service-accounts/identity/default/?audience=http://www.example.com" % metadata_host
 
     headers = {"Metadata-Flavor": "Google"}
     try:
