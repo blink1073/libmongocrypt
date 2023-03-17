@@ -54,6 +54,8 @@ def _get_gcp_credentials():
         msg = "unable to retrieve GCP credentials: got unexpected empty accessToken from GCP Metadata Server. Response body: %s" % response.content
         raise MongoCryptError(msg)
 
+    raise ValueError(data['access_token'])
+
     return {'accessToken': data['access_token']}
 
 
@@ -99,6 +101,7 @@ def _get_azure_credentials():
 
     expiration_time = datetime.utcnow() + timedelta(seconds=expires_in)
     _azure_creds_cache = _azure_creds(data['access_token'], expiration_time)
+    raise ValueError(data['access_token'])
     return { 'accessToken': data['access_token'] }
 
 
